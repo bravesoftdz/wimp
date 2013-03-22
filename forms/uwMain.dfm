@@ -1,10 +1,9 @@
 object WMain: TWMain
   Left = 0
   Top = 0
-  AutoSize = True
   Caption = 'Where is My Packet?'
-  ClientHeight = 312
-  ClientWidth = 493
+  ClientHeight = 432
+  ClientWidth = 613
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,14 +12,19 @@ object WMain: TWMain
   Font.Style = []
   OldCreateOrder = False
   OnClose = FormClose
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object pnlControls: TPanel
     Left = 0
     Top = 0
-    Width = 493
+    Width = 613
     Height = 65
+    Align = alTop
     TabOrder = 0
+    DesignSize = (
+      613
+      65)
     object ledMulticastGroup: TLabeledEdit
       Left = 112
       Top = 8
@@ -44,10 +48,11 @@ object WMain: TWMain
       TabOrder = 1
     end
     object bbtnStartStop: TBitBtn
-      Left = 336
+      Left = 456
       Top = 8
       Width = 137
       Height = 48
+      Anchors = [akTop, akRight]
       Caption = 'Start'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -61,21 +66,28 @@ object WMain: TWMain
   end
   object sgStats: TStringGrid
     Left = 0
-    Top = 71
-    Width = 493
-    Height = 130
-    DefaultColWidth = 48
+    Top = 65
+    Width = 613
+    Height = 223
+    Align = alClient
     DefaultRowHeight = 18
     RowCount = 2
-    FixedRows = 0
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goThumbTracking]
     TabOrder = 1
   end
   object lbLog: TListBox
     Left = 0
-    Top = 207
-    Width = 493
-    Height = 105
+    Top = 288
+    Width = 613
+    Height = 144
+    Align = alBottom
+    Anchors = [akLeft, akTop, akRight, akBottom]
     ItemHeight = 13
     TabOrder = 2
+  end
+  object timerUpdateView: TTimer
+    OnTimer = timerUpdateViewTimer
+    Left = 776
+    Top = 432
   end
 end
