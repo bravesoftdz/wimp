@@ -18,6 +18,8 @@ type
 
     TStreamInfo = class(TObject)
         m_uPID: uint16;
+        m_bHaveError: boolean;
+        m_bCanHaveError: boolean;
         m_rLastPacket: TPacketInfo;
         m_uiPacketsCount: uint64;
         m_uiErrorsCount: uint64;
@@ -29,6 +31,8 @@ type
     protected
         m_sMulticastGroup: string;
         m_uiMulticastPort: uint16;
+
+        m_uiPossibleErrors: uint8;
 
         m_iPerformanceFreq: int64;
 
@@ -59,9 +63,22 @@ uses
 
 { StreamInfo }
 
+function PrintPacketError(PID: uint16; Counter: uint8): string;
+begin
+    Result := 'PID: #' + IntToHex(PID, 4) + '; Counter: ' + UIntToStr(Counter) + '.';
+end;
+
 constructor TStreamInfo.Create(PID: uint16);
 begin
     m_uPID := PID;
+    m_bHaveError := false;
+    m_bCanHaveError := false;
+    m_uiPacketsCount := 0;
+    m_uiErrorsCount := 0;
+
+    m_rLastPacket.PID := 0;
+    m_rLastPacket.Counter := 0;
+    m_rLastPacket.Microtime := 0;
 end;
 
 { MulticastStreamAnalyzer }
@@ -69,6 +86,8 @@ end;
 constructor TMulticastStreamAnalyzer.Create(MulticastGroup: string; MulticastPort: uint16);
 begin
     inherited Create;
+
+    m_uiPossibleErrors := 0;
 
     m_sMulticastGroup := MulticastGroup;
     m_uiMulticastPort := MulticastPort;
@@ -87,8 +106,11 @@ end;
 
 destructor TMulticastStreamAnalyzer.Destroy;
 begin
+    m_oCriticalSection.Enter;
     FreeAndNil(m_oMulticastClient);
     FreeAndNil(m_slStreamsInfo);
+    m_oCriticalSection.Leave;
+
     FreeAndNil(m_oCriticalSection);
 
     Log(llDebug, 'Multicast Watcher stopped');
@@ -105,6 +127,7 @@ begin
     m_oMulticastClient.DefaultPort := m_uiMulticastPort;
     m_oMulticastClient.ReuseSocket := rsTrue;
     m_oMulticastClient.ThreadedEvent := true;
+    m_oMulticastClient.BufferSize := 8196 * 4;
     m_oMulticastClient.Active := true;
 
     Log(llDebug, 'Multicast Watcher started');
@@ -116,6 +139,9 @@ var
     PacketInfo: TPacketInfo;
     i, j: int32;
 begin
+    if (Length(AData) <> 1316) then
+        Log(llDebug, 'Data size: ' + UIntToStr(Length(AData)));
+
     i := 0;
     j := i + 188;
     while (j <= Length(AData)) do begin
@@ -206,7 +232,9 @@ end;
 procedure TMulticastStreamAnalyzer.UpdateMPEGTSStreamInfo(PacketInfo: TPacketInfo);
 var
     StreamInfo: TStreamInfo;
-    Index: Integer;
+    CanBeError: Boolean;
+    Index, I: Integer;
+    PresumablyErrorsCount: uint8;
 begin
     m_oCriticalSection.Enter;
 
@@ -219,19 +247,90 @@ begin
 
     Inc(StreamInfo.m_uiPacketsCount);
 
-    if (PacketInfo.hasError) then
+    if (PacketInfo.hasError) then begin
         Inc(StreamInfo.m_uiErrorsCount);
+        Log(llWarning, 'Network Error. Packet with PID = #' + IntToHex(PacketInfo.PID, 4) + ' has error flag.');
+    end;
 
-    if ((StreamInfo.m_rLastPacket.PID <> 0) and (not PacketInfo.isOnlyAdaptation)) then
-        if (((StreamInfo.m_rLastPacket.Counter < $0F) and ((StreamInfo.m_rLastPacket.Counter + 1) <> PacketInfo.Counter))
-        or ((StreamInfo.m_rLastPacket.Counter = $0F) and (PacketInfo.Counter <> 0))) then begin
-            Inc(StreamInfo.m_uiErrorsCount);
-            Log(llDebug, 'Error! PID = ' + IntToStr(PacketInfo.PID) + '; Last Counter = ' + IntToStr(StreamInfo.m_rLastPacket.Counter) + '; Counter = ' + IntToStr(PacketInfo.Counter));
+    // Если пакет уже помечен, как имеющий ошибку - сбрасываем флаг и пропускаем его
+    if (StreamInfo.m_bHaveError) then begin
+        StreamInfo.m_bHaveError := false;
+        StreamInfo.m_bCanHaveError := false;
+        //Log(llDebug, '1: ' + PrintPacketError(PacketInfo.PID, PacketInfo.Counter));
+    end
+    else
+    // Обработка всех остальных пакетов
+    if ((StreamInfo.m_rLastPacket.PID <> 0) and (not PacketInfo.isOnlyAdaptation)) then begin
+        if ((StreamInfo.m_rLastPacket.Counter + 1) <> PacketInfo.Counter)
+        and ((StreamInfo.m_rLastPacket.Counter + 1) <> (PacketInfo.Counter + $0F + 1)) then begin
+
+            // Находим предположительное количество ошибок от предыдущего пакета до текущего
+            if (StreamInfo.m_rLastPacket.Counter < PacketInfo.Counter) then
+                PresumablyErrorsCount := PacketInfo.Counter - StreamInfo.m_rLastPacket.Counter
+            else
+                PresumablyErrorsCount := (PacketInfo.Counter + $0F) - StreamInfo.m_rLastPacket.Counter;
+
+            // Если ошибок более 7 - был потерян не один пакет. Точнее сказать невозможно.
+            if (PresumablyErrorsCount > 7) then
+            begin
+                // Считаем как 2 ошибки
+                Inc(StreamInfo.m_uiErrorsCount, 2);
+                // Маркируем все потоки для пропуска следующего пакета без ошибок
+                for I := 0 to m_slStreamsInfo.Count - 1 do
+                    (m_slStreamsInfo.Objects[I] as TStreamInfo).m_bHaveError := true;
+                // Пишем в лог
+                Log(llWarning, 'Packet Sequence Error. More than one packet with PID = #' + IntToHex(PacketInfo.PID, 4) + ' has wrong counter: ' + UIntToStr(PacketInfo.Counter) + ', must be: ' + UIntToStr(StreamInfo.m_rLastPacket.Counter + 1));
+            end
+            else
+            // Если ошибок менее чем возможных ошибок потока - относим к уже обработанной ошибке
+            if (m_uiPossibleErrors > PresumablyErrorsCount) then begin
+                // Уменьшаем количество возможных ошибок на количество предположительных ошибок
+                m_uiPossibleErrors := m_uiPossibleErrors - PresumablyErrorsCount;
+                // Помечаем данный поток как не имеющий ошибок
+                StreamInfo.m_bCanHaveError := false;
+            end
+            else
+            // Иначе - считаем необработанной ошибкой
+            begin
+                // Считаем ошибку
+                Inc(StreamInfo.m_uiErrorsCount);
+                // Выставляем количество возможных ошибок
+                m_uiPossibleErrors := 7 - PresumablyErrorsCount;
+                // Помечаем все потоки, кроме текущего, как возможно имеющие ошибки
+                for I := 0 to m_slStreamsInfo.Count - 1 do
+                    if ((m_slStreamsInfo.Objects[I] as TStreamInfo).m_uPID <> PacketInfo.PID) then
+                        (m_slStreamsInfo.Objects[I] as TStreamInfo).m_bCanHaveError := true;
+                // Пишем в лог
+                //Log(llDebug, 'Possible errors: ' + UIntToStr(m_uiPossibleErrors) + '; Pres. Errors: ' + UIntToStr(PresumablyErrorsCount));
+                Log(llWarning, 'Packet Error. Packet with PID = #' + IntToHex(PacketInfo.PID, 4) + ' has wrong counter: ' + UIntToStr(PacketInfo.Counter) + ', must be: ' + UIntToStr(StreamInfo.m_rLastPacket.Counter + 1));
+            end;
+
+            //Log(llDebug, 'Possible Errors Counter: ' + UIntToStr(m_uiPossibleErrors));
+        end
+        // Иначе - очищаем флаг возможных ошибок, пакет правильный
+        else
+            StreamInfo.m_bCanHaveError := false;
+    end;
+
+    // Если ни один поток не помечен, как возможно имеющий ошибку - очищаем счетчик возможных ошибок
+    if (m_uiPossibleErrors > 0) then begin
+        CanBeError := false;
+        for I := 0 to m_slStreamsInfo.Count - 1 do
+            if ((m_slStreamsInfo.Objects[I] as TStreamInfo).m_bCanHaveError) then begin
+                CanBeError := true;
+                //Log(llDebug, 'Stream with PID ' + IntToHex((m_slStreamsInfo.Objects[I] as TStreamInfo).m_uPID, 4) + ' can be with err');
+            end;
+        if (not CanBeError) then begin
+            m_uiPossibleErrors := 0;
+            //Log(llDebug, 'All streams clear');
         end;
+    end;
 
     StreamInfo.m_rLastPacket := PacketInfo;
 
     m_oCriticalSection.Leave;
 end;
+
+
 
 end.
