@@ -1,7 +1,7 @@
 object WMain: TWMain
   Left = 0
   Top = 0
-  Caption = 'Where is My Packet?'
+  Caption = 'Where is My Packet? v.0.2'
   ClientHeight = 374
   ClientWidth = 507
   Color = clBtnFace
@@ -69,7 +69,7 @@ object WMain: TWMain
     Top = 65
     Width = 507
     Height = 309
-    ActivePage = tsStats
+    ActivePage = tsGraphBandwidth
     Align = alClient
     TabOrder = 1
     object tsLog: TTabSheet
