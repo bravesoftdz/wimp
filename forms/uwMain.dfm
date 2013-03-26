@@ -1,7 +1,7 @@
 object WMain: TWMain
   Left = 0
   Top = 0
-  Caption = 'Where is My Packet? v.0.2'
+  Caption = 'Where is My Packet? v.0.3'
   ClientHeight = 374
   ClientWidth = 507
   Color = clBtnFace
