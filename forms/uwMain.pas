@@ -36,6 +36,7 @@ type
         m_uSumPacketsCount: uint64;
         m_bIsMulticastThreadRunning: Boolean;
         m_tMulticastThread: TMulticastStreamAnalyzer;
+        m_fLogFile: TextFile;
     public
         constructor Create(AOwner: TComponent); override;
         procedure Log(LogLevel: TLogLevel; Mess: string);
@@ -59,6 +60,8 @@ procedure TWMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
     if (Assigned(m_tMulticastThread)) then
         FreeAndNil(m_tMulticastThread);
+
+    CloseFile(m_fLogFile);
 end;
 
 procedure TWMain.FormCreate(Sender: TObject);
@@ -74,6 +77,12 @@ begin
     tcsBandwidth.Clear;
     tcsPackets.Clear;
     tcGraphBandwidth.BottomAxis.DateTimeFormat := 'hh:nn:ss';
+
+    AssignFile(m_fLogFile, ChangeFileExt(ParamStr(0), '.log'));
+    if (FileExists(ChangeFileExt(ParamStr(0), '.log'))) then
+        Append(m_fLogFile)
+    else
+        ReWrite(m_fLogFile);
 end;
 
 procedure TWMain.bbtnStartStopClick(Sender: TObject);
@@ -106,6 +115,8 @@ end;
 procedure TWMain.Log(LogLevel: TLogLevel; Mess: string);
 begin
     lbLog.Items.Add('[' + DateToStr(Now()) + ' ' + TimeToStr(Now()) + ']' + ' ' + Mess);
+    WriteLn(m_fLogFile, Mess);
+    Flush(m_fLogFile);
 end;
 
 procedure TWMain.timerUpdateViewTimer(Sender: TObject);
@@ -163,9 +174,9 @@ begin
         m_uSumPacketsCount := SumPacketsCount;
 
     // Чистим график до 100 значений
-    if (tcsBandwidth.Count > 400) then
+    if (tcsBandwidth.Count > 200) then
         tcsBandwidth.Delete(0);
-    if (tcsPackets.Count > 400) then
+    if (tcsPackets.Count > 200) then
         tcsPackets.Delete(0);
 end;
 
