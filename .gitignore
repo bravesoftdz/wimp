@@ -9,3 +9,5 @@ __history
 *.exe
 *.dll
 Win32/*
+# Don't ignore precompiled exe
+!precompiled/*.exe
