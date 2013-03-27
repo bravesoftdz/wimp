@@ -36,7 +36,7 @@ type
         m_uSumPacketsCount: uint64;
         m_bIsMulticastThreadRunning: Boolean;
         m_tMulticastThread: TMulticastStreamAnalyzer;
-        m_fLogFile: TextFile;
+        m_sLogWriter: TStreamWriter;
     public
         constructor Create(AOwner: TComponent); override;
         procedure Log(LogLevel: TLogLevel; Mess: string);
@@ -61,7 +61,8 @@ begin
     if (Assigned(m_tMulticastThread)) then
         FreeAndNil(m_tMulticastThread);
 
-    CloseFile(m_fLogFile);
+    if (Assigned(m_sLogWriter)) then
+        FreeAndNil(m_sLogWriter);
 end;
 
 procedure TWMain.FormCreate(Sender: TObject);
@@ -78,11 +79,14 @@ begin
     tcsPackets.Clear;
     tcGraphBandwidth.BottomAxis.DateTimeFormat := 'hh:nn:ss';
 
-    AssignFile(m_fLogFile, ChangeFileExt(ParamStr(0), '.log'));
-    if (FileExists(ChangeFileExt(ParamStr(0), '.log'))) then
-        Append(m_fLogFile)
-    else
-        ReWrite(m_fLogFile);
+    try
+        m_sLogWriter := TStreamWriter.Create(ChangeFileExt(ParamStr(0), '.log'), true, TEncoding.UTF8);
+    except
+        on E: Exception do begin
+            Log(llDebug, 'General error: ' + E.Message);
+            FreeAndNil(m_sLogWriter);
+        end;
+    end;
 end;
 
 procedure TWMain.bbtnStartStopClick(Sender: TObject);
@@ -113,10 +117,15 @@ begin
 end;
 
 procedure TWMain.Log(LogLevel: TLogLevel; Mess: string);
+var
+    DateInfo: string;
 begin
-    lbLog.Items.Add('[' + DateToStr(Now()) + ' ' + TimeToStr(Now()) + ']' + ' ' + Mess);
-    WriteLn(m_fLogFile, Mess);
-    Flush(m_fLogFile);
+    DateInfo := '[' + DateToStr(Now()) + ' ' + TimeToStr(Now()) + ']';
+    lbLog.Items.Add(DateInfo + ' ' + Mess);
+    if (Assigned(m_sLogWriter)) then begin
+        m_sLogWriter.WriteLine(DateInfo + ' ' + Mess);
+        m_sLogWriter.Flush;
+    end;
 end;
 
 procedure TWMain.timerUpdateViewTimer(Sender: TObject);
