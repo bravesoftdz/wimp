@@ -45,6 +45,7 @@ object WMain: TWMain
       EditLabel.Height = 13
       EditLabel.Caption = 'Port'
       LabelPosition = lpLeft
+      NumbersOnly = True
       TabOrder = 1
     end
     object bbtnStartStop: TBitBtn
@@ -69,7 +70,7 @@ object WMain: TWMain
     Top = 65
     Width = 507
     Height = 309
-    ActivePage = tsGraphBandwidth
+    ActivePage = tsLog
     Align = alClient
     TabOrder = 1
     object tsLog: TTabSheet

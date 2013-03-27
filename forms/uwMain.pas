@@ -8,6 +8,7 @@ uses
     Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
     Vcl.Buttons,
     Vcl.Grids,
+    IdIPMCastBase, IdIPMCastClient,
     USLogger, Vcl.ComCtrls, VCLTee.TeEngine, VCLTee.Series, VCLTee.TeeProcs,
     VCLTee.Chart, VCLTee.TeeSpline;
 
@@ -76,15 +77,29 @@ begin
 end;
 
 procedure TWMain.bbtnStartStopClick(Sender: TObject);
+var
+    idIPMCastClientTemp: TIdIPMCastClient;
 begin
     if (not m_bIsMulticastThreadRunning) then begin
-        m_tMulticastThread := TMulticastStreamAnalyzer.Create(ledMulticastGroup.Text, StrToInt(ledMulticastPort.Text));
-        m_bIsMulticastThreadRunning := true;
-        bbtnStartStop.Caption := 'Stop';
+        idIPMCastClientTemp := TIdIPMCastClient.Create(nil);
+        if (idIPMCastClientTemp.IsValidMulticastGroup(ledMulticastGroup.Text)) then begin
+            if ((StrToInt(ledMulticastPort.Text) > 0) and (StrToInt(ledMulticastPort.Text) < 65535)) then begin
+                ledMulticastGroup.Enabled := false;
+                ledMulticastPort.Enabled := false;
+                m_tMulticastThread := TMulticastStreamAnalyzer.Create(ledMulticastGroup.Text, StrToInt(ledMulticastPort.Text));
+                m_bIsMulticastThreadRunning := true;
+                bbtnStartStop.Caption := 'Stop';
+            end else
+                ShowMessage('"' + ledMulticastPort.Text + '" is not valid port!');
+        end else
+            ShowMessage('"' + ledMulticastGroup.Text + '" is not valid multicast group!');
+        FreeAndNil(idIPMCastClientTemp);
     end else begin
         FreeAndNil(m_tMulticastThread);
         m_bIsMulticastThreadRunning := false;
         bbtnStartStop.Caption := 'Start';
+        ledMulticastGroup.Enabled := true;
+        ledMulticastPort.Enabled := true;
     end;
 end;
 
