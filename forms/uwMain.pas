@@ -78,15 +78,6 @@ begin
     tcsBandwidth.Clear;
     tcsPackets.Clear;
     tcGraphBandwidth.BottomAxis.DateTimeFormat := 'hh:nn:ss';
-
-    try
-        m_sLogWriter := TStreamWriter.Create(ChangeFileExt(ParamStr(0), '.log'), true, TEncoding.UTF8);
-    except
-        on E: Exception do begin
-            Log(llDebug, 'General error: ' + E.Message);
-            FreeAndNil(m_sLogWriter);
-        end;
-    end;
 end;
 
 procedure TWMain.bbtnStartStopClick(Sender: TObject);
@@ -97,11 +88,19 @@ begin
         idIPMCastClientTemp := TIdIPMCastClient.Create(nil);
         if (idIPMCastClientTemp.IsValidMulticastGroup(ledMulticastGroup.Text)) then begin
             if ((StrToInt(ledMulticastPort.Text) > 0) and (StrToInt(ledMulticastPort.Text) < 65535)) then begin
-                ledMulticastGroup.Enabled := false;
-                ledMulticastPort.Enabled := false;
-                m_tMulticastThread := TMulticastStreamAnalyzer.Create(ledMulticastGroup.Text, StrToInt(ledMulticastPort.Text));
-                m_bIsMulticastThreadRunning := true;
-                bbtnStartStop.Caption := 'Stop';
+                try
+                    m_sLogWriter := TStreamWriter.Create(ExtractFilePath(ParamStr(0)) + ledMulticastGroup.Text + '.' + ledMulticastPort.Text + '.log', true, TEncoding.UTF8);
+                    ledMulticastGroup.Enabled := false;
+                    ledMulticastPort.Enabled := false;
+                    m_tMulticastThread := TMulticastStreamAnalyzer.Create(ledMulticastGroup.Text, StrToInt(ledMulticastPort.Text));
+                    m_bIsMulticastThreadRunning := true;
+                    bbtnStartStop.Caption := 'Stop';
+                except
+                    on E: Exception do begin
+                        Log(llDebug, 'General error: ' + E.Message);
+                        FreeAndNil(m_sLogWriter);
+                    end;
+                end;
             end else
                 ShowMessage('"' + ledMulticastPort.Text + '" is not valid port!');
         end else
@@ -109,6 +108,7 @@ begin
         FreeAndNil(idIPMCastClientTemp);
     end else begin
         FreeAndNil(m_tMulticastThread);
+        FreeAndNil(m_sLogWriter);
         m_bIsMulticastThreadRunning := false;
         bbtnStartStop.Caption := 'Start';
         ledMulticastGroup.Enabled := true;
@@ -121,7 +121,10 @@ var
     DateInfo: string;
 begin
     DateInfo := '[' + DateToStr(Now()) + ' ' + TimeToStr(Now()) + ']';
+
     lbLog.Items.Add(DateInfo + ' ' + Mess);
+    lbLog.TopIndex := -1 + lbLog.Items.Count;
+
     if (Assigned(m_sLogWriter)) then begin
         m_sLogWriter.WriteLine(DateInfo + ' ' + Mess);
         m_sLogWriter.Flush;
