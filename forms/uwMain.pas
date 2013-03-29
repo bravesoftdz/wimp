@@ -4,6 +4,7 @@ interface
 
 uses
     Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+    System.DateUtils,
     System.Classes, uMulticastStreamAnalyzer, System.SyncObjs, Vcl.Graphics,
     Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
     Vcl.Buttons,
@@ -11,6 +12,9 @@ uses
     IdIPMCastBase, IdIPMCastClient,
     USLogger, Vcl.ComCtrls, VCLTee.TeEngine, VCLTee.Series, VCLTee.TeeProcs,
     VCLTee.Chart, VCLTee.TeeSpline;
+
+const
+    ERRORS_GRAPH_TIME = 5; // minutes
 
 type
     TWMain = class(TForm)
@@ -28,12 +32,16 @@ type
         tcGraphBandwidth: TChart;
         tcsBandwidth: TLineSeries;
         tcsPackets: TLineSeries;
+        tsGraphErrors: TTabSheet;
+        tcErrorsGraph: TChart;
+        tcsErrorsCount: TBarSeries;
         procedure bbtnStartStopClick(Sender: TObject);
         procedure FormClose(Sender: TObject; var Action: TCloseAction);
         procedure timerUpdateViewTimer(Sender: TObject);
         procedure FormCreate(Sender: TObject);
     private
         m_uSumPacketsCount: uint64;
+        m_uSumErrorsGraphed: uint64;
         m_bIsMulticastThreadRunning: Boolean;
         m_tMulticastThread: TMulticastStreamAnalyzer;
         m_sLogWriter: TStreamWriter;
@@ -78,6 +86,9 @@ begin
     tcsBandwidth.Clear;
     tcsPackets.Clear;
     tcGraphBandwidth.BottomAxis.DateTimeFormat := 'hh:nn:ss';
+
+    tcsErrorsCount.Clear;
+    tcErrorsGraph.BottomAxis.DateTimeFormat := 'hh:nn';
 end;
 
 procedure TWMain.bbtnStartStopClick(Sender: TObject);
@@ -123,7 +134,7 @@ begin
     DateInfo := '[' + DateToStr(Now()) + ' ' + TimeToStr(Now()) + ']';
 
     lbLog.Items.Add(DateInfo + ' ' + Mess);
-    lbLog.TopIndex := -1 + lbLog.Items.Count;
+    lbLog.TopIndex := lbLog.Items.Count - 1;
 
     if (Assigned(m_sLogWriter)) then begin
         m_sLogWriter.WriteLine(DateInfo + ' ' + Mess);
@@ -136,9 +147,14 @@ var
     i: integer;
     SumPacketsCount: uint64;
     SumErrorsCount: uint64;
+    CurrentDateTime: TDateTime;
+    CurrentDateTimeForGraph: TDateTime;
 begin
     SumPacketsCount := 0;
     SumErrorsCount := 0;
+
+    CurrentDateTime := Now();
+    CurrentDateTimeForGraph := RecodeTime(CurrentDateTime, HourOfTheDay(CurrentDateTime), MinuteOfTheHour(CurrentDateTime) - (MinuteOfTheHour(CurrentDateTime) mod ERRORS_GRAPH_TIME), 0, 0);
 
     if (Assigned(m_tMulticastThread)) then begin
         m_tMulticastThread.m_oCriticalSection.Enter;
@@ -181,9 +197,23 @@ begin
         tcsPackets.AddXY(Now(), 0);
     end;
 
+    // Добавляем на график ошибок
+    if ((tcsErrorsCount.Count < 1) or (tcsErrorsCount.XValue[tcsErrorsCount.Count - 1] <> CurrentDateTimeForGraph)) then
+        tcsErrorsCount.AddXY(CurrentDateTimeForGraph, 0);
+
+    if (SumErrorsCount > m_uSumErrorsGraphed) then begin
+        if (tcsErrorsCount.XValue[tcsErrorsCount.Count - 1] = CurrentDateTimeForGraph) then begin
+            tcsErrorsCount.YValue[tcsErrorsCount.Count - 1] := tcsErrorsCount.YValue[tcsErrorsCount.Count - 1] + (SumErrorsCount - m_uSumErrorsGraphed);
+        end else
+            tcsErrorsCount.AddXY(CurrentDateTimeForGraph, SumErrorsCount - m_uSumErrorsGraphed);
+    end;
+
     // Если количество пакетов было отличным от нуля - обновляем исторический счетчик
     if (SumPacketsCount > 0) then
         m_uSumPacketsCount := SumPacketsCount;
+
+    if (SumErrorsCount > 0) then
+        m_uSumErrorsGraphed := SumErrorsCount;
 
     // Чистим график до 100 значений
     if (tcsBandwidth.Count > 200) then

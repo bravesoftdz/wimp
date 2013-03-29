@@ -1,7 +1,7 @@
 object WMain: TWMain
   Left = 0
   Top = 0
-  Caption = 'Where is My Packet? v.0.3.3'
+  Caption = 'Where is My Packet? v.0.3.5'
   ClientHeight = 374
   ClientWidth = 507
   Color = clBtnFace
@@ -88,6 +88,10 @@ object WMain: TWMain
     end
     object tsStats: TTabSheet
       Caption = 'Statistic'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object sgStats: TStringGrid
         Left = 0
         Top = 0
@@ -104,6 +108,10 @@ object WMain: TWMain
     object tsGraphBandwidth: TTabSheet
       Caption = 'Network Graph'
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object tcGraphBandwidth: TChart
         Left = 0
         Top = 0
@@ -185,6 +193,57 @@ object WMain: TWMain
             Period = 1.000000000000000000
             Factor = 8
           end
+        end
+      end
+    end
+    object tsGraphErrors: TTabSheet
+      Caption = 'Errors Graph'
+      ImageIndex = 3
+      object tcErrorsGraph: TChart
+        Left = 0
+        Top = 0
+        Width = 499
+        Height = 281
+        AllowPanning = pmNone
+        Legend.Visible = False
+        Title.Text.Strings = (
+          'TChart')
+        Title.Visible = False
+        BottomAxis.ExactDateTime = False
+        BottomAxis.Increment = 0.003472222222222222
+        LeftAxis.Automatic = False
+        LeftAxis.AutomaticMinimum = False
+        LeftAxis.ExactDateTime = False
+        LeftAxis.Increment = 1.000000000000000000
+        Panning.MouseWheel = pmwNone
+        View3D = False
+        Zoom.Allow = False
+        Align = alClient
+        Color = clWindow
+        TabOrder = 0
+        ColorPaletteIndex = 13
+        object tcsErrorsCount: TBarSeries
+          BarBrush.Gradient.EndColor = 2152289
+          BarBrush.Gradient.MidColor = clRed
+          BarBrush.Gradient.StartColor = 10485760
+          Marks.Arrow.Visible = True
+          Marks.Callout.Brush.Color = clBlack
+          Marks.Callout.Arrow.Visible = True
+          Marks.Visible = False
+          Title = 'Errors'
+          Emboss.Color = 8487297
+          Gradient.EndColor = 2152289
+          Gradient.MidColor = clRed
+          Gradient.StartColor = 10485760
+          Shadow.Color = 8487297
+          XValues.DateTime = True
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Bar'
+          YValues.Order = loNone
+          Data = {
+            000600000000000000008076400000000000B870400000000000B06340000000
+            00000054400000000000404F400000000000404040}
         end
       end
     end
