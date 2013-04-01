@@ -45,6 +45,8 @@ type
         m_bIsMulticastThreadRunning: Boolean;
         m_tMulticastThread: TMulticastStreamAnalyzer;
         m_sLogWriter: TStreamWriter;
+        function StartMulticastWatcher(MulticastGroup: string; MulticastPort: uint16): boolean;
+        procedure StopMulticastWatcher;
     public
         constructor Create(AOwner: TComponent); override;
         procedure Log(LogLevel: TLogLevel; Mess: string);
@@ -66,11 +68,8 @@ end;
 
 procedure TWMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-    if (Assigned(m_tMulticastThread)) then
-        FreeAndNil(m_tMulticastThread);
-
-    if (Assigned(m_sLogWriter)) then
-        FreeAndNil(m_sLogWriter);
+    if (m_bIsMulticastThreadRunning) then
+        StopMulticastWatcher;
 end;
 
 procedure TWMain.FormCreate(Sender: TObject);
@@ -99,18 +98,11 @@ begin
         idIPMCastClientTemp := TIdIPMCastClient.Create(nil);
         if (idIPMCastClientTemp.IsValidMulticastGroup(ledMulticastGroup.Text)) then begin
             if ((StrToInt(ledMulticastPort.Text) > 0) and (StrToInt(ledMulticastPort.Text) < 65535)) then begin
-                try
-                    m_sLogWriter := TStreamWriter.Create(ExtractFilePath(ParamStr(0)) + ledMulticastGroup.Text + '.' + ledMulticastPort.Text + '.log', true, TEncoding.UTF8);
+                if (StartMulticastWatcher(ledMulticastGroup.Text, StrToInt(ledMulticastPort.Text))) then begin
                     ledMulticastGroup.Enabled := false;
                     ledMulticastPort.Enabled := false;
-                    m_tMulticastThread := TMulticastStreamAnalyzer.Create(ledMulticastGroup.Text, StrToInt(ledMulticastPort.Text));
                     m_bIsMulticastThreadRunning := true;
                     bbtnStartStop.Caption := 'Stop';
-                except
-                    on E: Exception do begin
-                        Log(llDebug, 'General error: ' + E.Message);
-                        FreeAndNil(m_sLogWriter);
-                    end;
                 end;
             end else
                 ShowMessage('"' + ledMulticastPort.Text + '" is not valid port!');
@@ -118,13 +110,43 @@ begin
             ShowMessage('"' + ledMulticastGroup.Text + '" is not valid multicast group!');
         FreeAndNil(idIPMCastClientTemp);
     end else begin
-        FreeAndNil(m_tMulticastThread);
-        FreeAndNil(m_sLogWriter);
+        StopMulticastWatcher;
+
         m_bIsMulticastThreadRunning := false;
         bbtnStartStop.Caption := 'Start';
         ledMulticastGroup.Enabled := true;
         ledMulticastPort.Enabled := true;
     end;
+end;
+
+function TWMain.StartMulticastWatcher(MulticastGroup: string; MulticastPort: uint16): boolean;
+begin
+    Result := false;
+
+    try
+        m_sLogWriter := TStreamWriter.Create(ExtractFilePath(ParamStr(0)) + MulticastGroup + '.' + UIntToStr(MulticastPort) + '.log', true, TEncoding.UTF8);
+        m_tMulticastThread := TMulticastStreamAnalyzer.Create(MulticastGroup, MulticastPort);
+        Result := true;
+    except
+        on E: Exception do begin
+            Log(llDebug, 'Start error: ' + E.Message);
+            StopMulticastWatcher;
+        end;
+    end;
+end;
+
+procedure TWMain.StopMulticastWatcher;
+begin
+    try
+        if (Assigned(m_tMulticastThread)) then
+            FreeAndNil(m_tMulticastThread);
+    except
+        on E: Exception do
+            Log(llDebug, 'Stop error: ' + E.Message);
+    end;
+
+    if (Assigned(m_sLogWriter)) then
+        FreeAndNil(m_sLogWriter);
 end;
 
 procedure TWMain.Log(LogLevel: TLogLevel; Mess: string);
@@ -157,7 +179,8 @@ begin
     CurrentDateTimeForGraph := RecodeTime(CurrentDateTime, HourOfTheDay(CurrentDateTime), MinuteOfTheHour(CurrentDateTime) - (MinuteOfTheHour(CurrentDateTime) mod ERRORS_GRAPH_TIME), 0, 0);
 
     if (Assigned(m_tMulticastThread)) then begin
-        m_tMulticastThread.m_oCriticalSection.Enter;
+        if (Assigned(m_tMulticastThread.m_oCriticalSection)) then
+            m_tMulticastThread.m_oCriticalSection.Enter;
 
         sgStats.RowCount := m_tMulticastThread.m_slStreamsInfo.Count + 2;
 
@@ -172,7 +195,8 @@ begin
             sgStats.Cells[4, i + 1] := '-';
         end;
 
-        m_tMulticastThread.m_oCriticalSection.Leave;
+        if (Assigned(m_tMulticastThread.m_oCriticalSection)) then
+            m_tMulticastThread.m_oCriticalSection.Leave;
 
         // Пишем в статистику суммарную информацию
         sgStats.Cells[0, sgStats.RowCount - 1] := 'Summary';
@@ -215,11 +239,13 @@ begin
     if (SumErrorsCount > 0) then
         m_uSumErrorsGraphed := SumErrorsCount;
 
-    // Чистим график до 100 значений
+    // Чистим графики
     if (tcsBandwidth.Count > 200) then
         tcsBandwidth.Delete(0);
     if (tcsPackets.Count > 200) then
         tcsPackets.Delete(0);
+    if (tcsErrorsCount.Count > 200) then
+        tcsErrorsCount.Delete(0);
 end;
 
 end.
