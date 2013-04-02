@@ -1,7 +1,7 @@
 object WMain: TWMain
   Left = 0
   Top = 0
-  Caption = 'Where is My Packet? v.0.3.5'
+  Caption = 'Where is My Packet? v.0.3.8'
   ClientHeight = 374
   ClientWidth = 507
   Color = clBtnFace
@@ -70,7 +70,7 @@ object WMain: TWMain
     Top = 65
     Width = 507
     Height = 309
-    ActivePage = tsLog
+    ActivePage = tsGraphErrors
     Align = alClient
     TabOrder = 1
     object tsLog: TTabSheet
@@ -88,10 +88,6 @@ object WMain: TWMain
     end
     object tsStats: TTabSheet
       Caption = 'Statistic'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object sgStats: TStringGrid
         Left = 0
         Top = 0
@@ -108,10 +104,6 @@ object WMain: TWMain
     object tsGraphBandwidth: TTabSheet
       Caption = 'Network Graph'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object tcGraphBandwidth: TChart
         Left = 0
         Top = 0
@@ -209,32 +201,57 @@ object WMain: TWMain
         Title.Text.Strings = (
           'TChart')
         Title.Visible = False
+        BottomAxis.DateTimeFormat = 'dd.mm hh:nn'
         BottomAxis.ExactDateTime = False
         BottomAxis.Increment = 0.003472222222222222
+        BottomAxis.LabelsAngle = 90
         LeftAxis.Automatic = False
+        LeftAxis.AutomaticMaximum = False
         LeftAxis.AutomaticMinimum = False
         LeftAxis.ExactDateTime = False
         LeftAxis.Increment = 1.000000000000000000
+        LeftAxis.Maximum = 100.000000000000000000
         Panning.MouseWheel = pmwNone
         View3D = False
         Zoom.Allow = False
         Align = alClient
         Color = clWindow
         TabOrder = 0
+        PrintMargins = (
+          15
+          22
+          15
+          22)
         ColorPaletteIndex = 13
         object tcsErrorsCount: TBarSeries
           BarBrush.Gradient.EndColor = 2152289
           BarBrush.Gradient.MidColor = clRed
           BarBrush.Gradient.StartColor = 10485760
-          Marks.Arrow.Visible = True
+          Marks.Angle = 90
+          Marks.Arrow.Visible = False
           Marks.Callout.Brush.Color = clBlack
-          Marks.Callout.Arrow.Visible = True
+          Marks.Callout.Arrow.Visible = False
+          Marks.Callout.Distance = 3
+          Marks.Callout.Length = 0
+          Marks.BackColor = clWhite
+          Marks.Color = clWhite
+          Marks.Emboss.Color = 8487297
+          Marks.Font.Height = -8
+          Marks.Font.Name = 'Tahoma'
+          Marks.Margins.Left = 3
+          Marks.Margins.Top = 3
+          Marks.Margins.Right = 6
+          Marks.Margins.Bottom = 3
+          Marks.Margins.Units = maPixels
+          Marks.Shadow.Color = 8684676
           Marks.Visible = False
           Title = 'Errors'
           Emboss.Color = 8487297
           Gradient.EndColor = 2152289
           Gradient.MidColor = clRed
           Gradient.StartColor = 10485760
+          MarksLocation = mlStart
+          MarksOnBar = True
           Shadow.Color = 8487297
           XValues.DateTime = True
           XValues.Name = 'X'

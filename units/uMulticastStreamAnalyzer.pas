@@ -109,11 +109,12 @@ end;
 
 destructor TMulticastStreamAnalyzer.Destroy;
 begin
-    m_oCriticalSection.Enter;
-    FreeAndNil(m_oMulticastClient);
-    FreeAndNil(m_slStreamsInfo);
-    m_oCriticalSection.Leave;
+    if (Assigned(m_oMulticastClient)) then begin
+        m_oMulticastClient.Active := false;
+        FreeAndNil(m_oMulticastClient);
+    end;
 
+    FreeAndNil(m_slStreamsInfo);
     FreeAndNil(m_oCriticalSection);
 
     Log(llDebug, 'Multicast Watcher stopped');
