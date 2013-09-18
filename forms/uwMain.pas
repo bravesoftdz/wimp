@@ -38,6 +38,7 @@ type
         procedure bbtnStartStopClick(Sender: TObject);
         procedure FormClose(Sender: TObject; var Action: TCloseAction);
         procedure timerUpdateViewTimer(Sender: TObject);
+        procedure updateGrapsWidth(Sender: TObject);
         procedure FormCreate(Sender: TObject);
     private
         m_uSumPacketsCount: uint64;
@@ -126,6 +127,7 @@ begin
     try
         m_sLogWriter := TStreamWriter.Create(ExtractFilePath(ParamStr(0)) + MulticastGroup + '.' + UIntToStr(MulticastPort) + '.log', true, TEncoding.UTF8);
         m_tMulticastThread := TMulticastStreamAnalyzer.Create(MulticastGroup, MulticastPort);
+        // TODO: Log(llDebug, 'WiMP v???? started.');
         Result := true;
     except
         on E: Exception do begin
@@ -162,6 +164,11 @@ begin
         m_sLogWriter.WriteLine(DateInfo + ' ' + Mess);
         m_sLogWriter.Flush;
     end;
+end;
+
+procedure TWMain.updateGrapsWidth(Sender: TObject);
+begin
+    // Нужно ли?
 end;
 
 procedure TWMain.timerUpdateViewTimer(Sender: TObject);
@@ -240,12 +247,13 @@ begin
         m_uSumErrorsGraphed := SumErrorsCount;
 
     // Чистим графики
-    if (tcsBandwidth.Count > 200) then
+    if (tcsBandwidth.Count > 900) then
         tcsBandwidth.Delete(0);
-    if (tcsPackets.Count > 200) then
+    if (tcsPackets.Count > 900) then
         tcsPackets.Delete(0);
-    if (tcsErrorsCount.Count > 200) then
+    if (tcsErrorsCount.Count > 100) then
         tcsErrorsCount.Delete(0);
+
 end;
 
 end.
