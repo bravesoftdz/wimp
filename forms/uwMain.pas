@@ -35,14 +35,18 @@ type
         tsGraphErrors: TTabSheet;
         tcErrorsGraph: TChart;
         tcsErrorsCount: TBarSeries;
+        timerCheckStream: TTimer;
         procedure bbtnStartStopClick(Sender: TObject);
         procedure FormClose(Sender: TObject; var Action: TCloseAction);
         procedure timerUpdateViewTimer(Sender: TObject);
+        procedure timerCheckStreamTimer(Sender: TObject);
         procedure updateGrapsWidth(Sender: TObject);
         procedure FormCreate(Sender: TObject);
     private
         m_uSumPacketsCount: uint64;
         m_uSumErrorsGraphed: uint64;
+        m_uStreamCheckPacketsCount: uint64;                                     // Количество пакетов с последнего тика таймера проверки потока
+        m_bIsStreamContinuous: Boolean;                                         // ???
         m_bIsMulticastThreadRunning: Boolean;
         m_tMulticastThread: TMulticastStreamAnalyzer;
         m_sLogWriter: TStreamWriter;
@@ -64,7 +68,7 @@ constructor TWMain.Create(AOwner: TComponent);
 begin
     inherited Create(AOwner);
     m_uSumPacketsCount := 0;
-    m_bIsMulticastThreadRunning := false;
+    m_bIsMulticastThreadRunning := False;
 end;
 
 procedure TWMain.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -123,6 +127,9 @@ end;
 function TWMain.StartMulticastWatcher(MulticastGroup: string; MulticastPort: uint16): boolean;
 begin
     Result := false;
+
+    m_uStreamCheckPacketsCount := 0;
+    m_bIsStreamContinuous := True;
 
     try
         m_sLogWriter := TStreamWriter.Create(ExtractFilePath(ParamStr(0)) + MulticastGroup + '.' + UIntToStr(MulticastPort) + '.log', true, TEncoding.UTF8);
@@ -253,7 +260,40 @@ begin
         tcsPackets.Delete(0);
     if (tcsErrorsCount.Count > 100) then
         tcsErrorsCount.Delete(0);
+end;
 
+procedure TWMain.timerCheckStreamTimer(Sender: TObject);
+var
+    SumPacketsCount: uint64;
+    i: integer;
+begin
+    SumPacketsCount := 0;
+
+    if (m_bIsMulticastThreadRunning and Assigned(m_tMulticastThread)) then begin
+        if (Assigned(m_tMulticastThread.m_oCriticalSection)) then
+            m_tMulticastThread.m_oCriticalSection.Enter;
+
+        for i := 0 to m_tMulticastThread.m_slStreamsInfo.Count - 1 do begin
+            SumPacketsCount := SumPacketsCount + (m_tMulticastThread.m_slStreamsInfo.Objects[i] as TStreamInfo).m_uiPacketsCount;
+        end;
+
+        if (Assigned(m_tMulticastThread.m_oCriticalSection)) then
+            m_tMulticastThread.m_oCriticalSection.Leave;
+    end;
+
+    if (m_bIsMulticastThreadRunning and (SumPacketsCount <> 0)) then begin
+        if (SumPacketsCount <= m_uStreamCheckPacketsCount) then begin
+            if (m_bIsStreamContinuous) then begin
+                m_bIsStreamContinuous := False;
+                log(llWarning, 'Stream is not continuous.')
+            end;
+        end else
+            if (not m_bIsStreamContinuous) then begin
+                m_bIsStreamContinuous := True;
+                log(llWarning, 'Stream resumed.');
+            end;
+            m_uStreamCheckPacketsCount := SumPacketsCount;
+    end;
 end;
 
 end.

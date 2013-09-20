@@ -49,11 +49,11 @@
         <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
         <VerInfo_MajorVer>0</VerInfo_MajorVer>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Release>6</VerInfo_Release>
+        <VerInfo_Release>10</VerInfo_Release>
         <VerInfo_MinorVer>3</VerInfo_MinorVer>
         <VCL_Custom_Styles>&quot;Metropolis UI Blue|VCLSTYLE|$(PUBLIC)\Documents\RAD Studio\10.0\Styles\MetropolisUIBlue.vsf&quot;</VCL_Custom_Styles>
-        <VerInfo_Keys>FileVersion=0.3.6.325;ProductVersion=0.3;CompanyName=;FileDescription=;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;Comments=Where is My Packet?</VerInfo_Keys>
-        <VerInfo_Build>325</VerInfo_Build>
+        <VerInfo_Keys>FileVersion=0.3.10.410;ProductVersion=0.3.10.410;CompanyName=Lancom, Inc.;FileDescription=;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=WiMP;Comments=Where is My Packet?</VerInfo_Keys>
+        <VerInfo_Build>410</VerInfo_Build>
         <VerInfo_Locale>1049</VerInfo_Locale>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <Icon_MainIcon>WiMP_Icon.ico</Icon_MainIcon>
@@ -67,8 +67,11 @@
         <DCC_K>false</DCC_K>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
+        <VerInfo_Build>0</VerInfo_Build>
+        <VerInfo_MinorVer>0</VerInfo_MinorVer>
+        <VerInfo_Release>0</VerInfo_Release>
+        <VerInfo_MajorVer>1</VerInfo_MajorVer>
         <DCC_UsePackage>fs17;frx17;bindcompfmx;DBXSqliteDriver;vcldbx;fmx;rtl;dbrtl;DbxClientDriver;IndySystem;TeeDB;bindcomp;inetdb;vclib;inetdbbde;DBXInterBaseDriver;DataSnapClient;DataSnapCommon;DBXOdbcDriver;DataSnapServer;Tee;DataSnapProviderClient;xmlrtl;svnui;ibxpress;DbxCommonDriver;DBXSybaseASEDriver;vclimg;IndyProtocols;dbxcds;DBXMySQLDriver;DatasnapConnectorsFreePascal;MetropolisUILiveTile;vclactnband;bindengine;vcldb;soaprtl;bindcompdbx;vcldsnap;bindcompvcl;FMXTee;TeeUI;vclie;vcltouch;DBXDb2Driver;websnap;DBXOracleDriver;CustomIPTransport;vclribbon;VclSmp;dsnap;IndyIPServer;DBXInformixDriver;Intraweb;fmxase;vcl;IndyCore;DataSnapConnectors;IndyIPCommon;CloudService;DBXMSSQLDriver;dsnapcon;DBXFirebirdDriver;FmxTeeUI;inet;fsDB17;fmxobj;frxDB17;CodeSiteExpressPkg;vclx;frxe17;inetdbxpress;webdsnap;svn;DBXSybaseASADriver;fmxdae;bdertl;dbexpress;adortl;DataSnapIndy10ServerTransport;IndyIPClient;$(DCC_UsePackage)</DCC_UsePackage>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
@@ -101,8 +104,8 @@
         <VerInfo_Release>0</VerInfo_Release>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_MinorVer>2</VerInfo_MinorVer>
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=0.2.0.333;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=0.2.0.327;Comments=</VerInfo_Keys>
-        <VerInfo_Build>333</VerInfo_Build>
+        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=0.2.0.338;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=0.2.0.327;Comments=</VerInfo_Keys>
+        <VerInfo_Build>338</VerInfo_Build>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">

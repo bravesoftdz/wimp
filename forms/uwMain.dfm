@@ -1,9 +1,9 @@
 object WMain: TWMain
   Left = 0
   Top = 0
-  Caption = 'Where is My Packet? v.0.3.8'
-  ClientHeight = 374
-  ClientWidth = 507
+  Caption = 'Where is My Packet? v.0.3.10'
+  ClientHeight = 444
+  ClientWidth = 629
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -18,12 +18,13 @@ object WMain: TWMain
   object pnlControls: TPanel
     Left = 0
     Top = 0
-    Width = 507
+    Width = 629
     Height = 65
     Align = alTop
     TabOrder = 0
+    ExplicitWidth = 507
     DesignSize = (
-      507
+      629
       65)
     object ledMulticastGroup: TLabeledEdit
       Left = 112
@@ -49,7 +50,7 @@ object WMain: TWMain
       TabOrder = 1
     end
     object bbtnStartStop: TBitBtn
-      Left = 350
+      Left = 472
       Top = 8
       Width = 137
       Height = 48
@@ -63,52 +64,65 @@ object WMain: TWMain
       ParentFont = False
       TabOrder = 2
       OnClick = bbtnStartStopClick
+      ExplicitLeft = 350
     end
   end
   object pcMainPageControl: TPageControl
     Left = 0
     Top = 65
-    Width = 507
-    Height = 309
-    ActivePage = tsGraphErrors
+    Width = 629
+    Height = 379
+    ActivePage = tsGraphBandwidth
     Align = alClient
     TabOrder = 1
+    ExplicitWidth = 507
+    ExplicitHeight = 309
     object tsLog: TTabSheet
       Caption = 'Log'
       ImageIndex = 1
+      ExplicitWidth = 499
+      ExplicitHeight = 281
       object lbLog: TListBox
         Left = 0
         Top = 0
-        Width = 499
-        Height = 281
+        Width = 621
+        Height = 351
         Align = alClient
         ItemHeight = 13
         TabOrder = 0
+        ExplicitWidth = 499
+        ExplicitHeight = 281
       end
     end
     object tsStats: TTabSheet
       Caption = 'Statistic'
+      ExplicitWidth = 499
+      ExplicitHeight = 281
       object sgStats: TStringGrid
         Left = 0
         Top = 0
-        Width = 499
-        Height = 281
+        Width = 621
+        Height = 351
         Align = alClient
         DefaultColWidth = 80
         DefaultRowHeight = 18
         RowCount = 2
         Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goThumbTracking]
         TabOrder = 0
+        ExplicitWidth = 499
+        ExplicitHeight = 281
       end
     end
     object tsGraphBandwidth: TTabSheet
       Caption = 'Network Graph'
       ImageIndex = 2
+      ExplicitWidth = 499
+      ExplicitHeight = 281
       object tcGraphBandwidth: TChart
         Left = 0
         Top = 0
-        Width = 499
-        Height = 281
+        Width = 621
+        Height = 351
         Cursor = crCross
         AllowPanning = pmNone
         Legend.Visible = False
@@ -129,6 +143,8 @@ object WMain: TWMain
         Align = alClient
         Color = clWindow
         TabOrder = 0
+        ExplicitWidth = 499
+        ExplicitHeight = 241
         ColorPaletteIndex = 13
         object tcsBandwidth: TLineSeries
           Cursor = crCross
@@ -191,11 +207,13 @@ object WMain: TWMain
     object tsGraphErrors: TTabSheet
       Caption = 'Errors Graph'
       ImageIndex = 3
+      ExplicitWidth = 499
+      ExplicitHeight = 281
       object tcErrorsGraph: TChart
         Left = 0
         Top = 0
-        Width = 499
-        Height = 281
+        Width = 621
+        Height = 351
         AllowPanning = pmNone
         Legend.Visible = False
         Title.Text.Strings = (
@@ -217,6 +235,8 @@ object WMain: TWMain
         Align = alClient
         Color = clWindow
         TabOrder = 0
+        ExplicitWidth = 499
+        ExplicitHeight = 281
         PrintMargins = (
           15
           22
@@ -269,5 +289,11 @@ object WMain: TWMain
     OnTimer = timerUpdateViewTimer
     Left = 776
     Top = 432
+  end
+  object timerCheckStream: TTimer
+    Interval = 300
+    OnTimer = timerCheckStreamTimer
+    Left = 776
+    Top = 480
   end
 end
