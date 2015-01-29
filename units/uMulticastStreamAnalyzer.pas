@@ -34,6 +34,7 @@ type
     protected
         m_sMulticastGroup: string;
         m_uiMulticastPort: uint16;
+        m_sBindingIP: string;
 
         m_uiPossibleErrors: uint8;
 
@@ -55,7 +56,7 @@ type
         m_slStreamsInfo: TStringList;
         m_oCriticalSection: TCriticalSection;
 
-        constructor Create(MulticastGroup: string; MulticastPort: uint16);
+        constructor Create(MulticastGroup: string; MulticastPort: uint16; BindingIP: string = '');
         destructor Destroy; override;
     end;
 
@@ -86,7 +87,7 @@ end;
 
 { MulticastStreamAnalyzer }
 
-constructor TMulticastStreamAnalyzer.Create(MulticastGroup: string; MulticastPort: uint16);
+constructor TMulticastStreamAnalyzer.Create(MulticastGroup: string; MulticastPort: uint16; BindingIP: string = '');
 begin
     inherited Create;
 
@@ -94,6 +95,7 @@ begin
 
     m_sMulticastGroup := MulticastGroup;
     m_uiMulticastPort := MulticastPort;
+    m_sBindingIP := BindingIP;
 
     if (not QueryPerformanceFrequency(m_iPerformanceFreq)) then
         Log(llError, 'Error while getting frequency information, timing may be wrong');
@@ -127,12 +129,23 @@ begin
 
     m_oMulticastClient.OnIPMCastRead := MulticastClientRead;
 
+    if m_sBindingIP <> '' then begin
+        with m_oMulticastClient.Bindings.Add do
+            IP := m_sBindingIP;
+    end;
+
     m_oMulticastClient.MulticastGroup := m_sMulticastGroup;
     m_oMulticastClient.DefaultPort := m_uiMulticastPort;
     m_oMulticastClient.ReuseSocket := rsTrue;
     m_oMulticastClient.ThreadedEvent := true;
     m_oMulticastClient.BufferSize := 8196 * 4;
-    m_oMulticastClient.Active := true;
+
+    try
+        m_oMulticastClient.Active := true;
+    except
+        on E: Exception do
+            Log(llDebug, 'Socket Critical Error. ' + E.Message);
+    end;
 
     Log(llDebug, 'Multicast Watcher for group ' + m_sMulticastGroup + ' started.');
 end;

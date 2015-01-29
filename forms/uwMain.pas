@@ -36,6 +36,7 @@ type
         tcErrorsGraph: TChart;
         tcsErrorsCount: TBarSeries;
         timerCheckStream: TTimer;
+        ledBindingIP: TLabeledEdit;
         procedure bbtnStartStopClick(Sender: TObject);
         procedure FormClose(Sender: TObject; var Action: TCloseAction);
         procedure timerUpdateViewTimer(Sender: TObject);
@@ -50,7 +51,7 @@ type
         m_bIsMulticastThreadRunning: Boolean;
         m_tMulticastThread: TMulticastStreamAnalyzer;
         m_sLogWriter: TStreamWriter;
-        function StartMulticastWatcher(MulticastGroup: string; MulticastPort: uint16): boolean;
+        function StartMulticastWatcher(MulticastGroup: string; MulticastPort: uint16; BindingIP: string = ''): boolean;
         procedure StopMulticastWatcher;
     public
         constructor Create(AOwner: TComponent); override;
@@ -103,9 +104,10 @@ begin
         idIPMCastClientTemp := TIdIPMCastClient.Create(nil);
         if (idIPMCastClientTemp.IsValidMulticastGroup(ledMulticastGroup.Text)) then begin
             if ((StrToInt(ledMulticastPort.Text) > 0) and (StrToInt(ledMulticastPort.Text) < 65535)) then begin
-                if (StartMulticastWatcher(ledMulticastGroup.Text, StrToInt(ledMulticastPort.Text))) then begin
+                if (StartMulticastWatcher(ledMulticastGroup.Text, StrToInt(ledMulticastPort.Text), ledBindingIP.Text)) then begin
                     ledMulticastGroup.Enabled := false;
                     ledMulticastPort.Enabled := false;
+                    ledBindingIP.Enabled := false;
                     m_bIsMulticastThreadRunning := true;
                     bbtnStartStop.Caption := 'Stop';
                 end;
@@ -121,10 +123,11 @@ begin
         bbtnStartStop.Caption := 'Start';
         ledMulticastGroup.Enabled := true;
         ledMulticastPort.Enabled := true;
+        ledBindingIP.Enabled := true;
     end;
 end;
 
-function TWMain.StartMulticastWatcher(MulticastGroup: string; MulticastPort: uint16): boolean;
+function TWMain.StartMulticastWatcher(MulticastGroup: string; MulticastPort: uint16; BindingIP: string = ''): boolean;
 begin
     Result := false;
 
@@ -133,7 +136,7 @@ begin
 
     try
         m_sLogWriter := TStreamWriter.Create(ExtractFilePath(ParamStr(0)) + MulticastGroup + '.' + UIntToStr(MulticastPort) + '.log', true, TEncoding.UTF8);
-        m_tMulticastThread := TMulticastStreamAnalyzer.Create(MulticastGroup, MulticastPort);
+        m_tMulticastThread := TMulticastStreamAnalyzer.Create(MulticastGroup, MulticastPort, BindingIP);
         // TODO: Log(llDebug, 'WiMP v???? started.');
         Result := true;
     except
