@@ -37,6 +37,7 @@ type
         m_sBindingIP: string;
 
         m_uiPossibleErrors: uint8;
+        m_uiExtendedCounter: uint32;
 
         m_iPerformanceFreq: int64;
 
@@ -92,6 +93,7 @@ begin
     inherited Create;
 
     m_uiPossibleErrors := 0;
+    m_uiExtendedCounter := 0;
 
     m_sMulticastGroup := MulticastGroup;
     m_uiMulticastPort := MulticastPort;
@@ -151,13 +153,30 @@ begin
 end;
 
 procedure TMulticastStreamAnalyzer.MulticastClientRead(Sender: TObject; const AData: TArray<System.Byte>; ABinding: TIdSocketHandle);
+const
+    EXT_OFFSET = 188 * 7;
 var
     Packet: TArray<System.Byte>;
     PacketInfo: TPacketInfo;
     i, j: int32;
+    ExtendedCounter: UInt32;
 begin
-    if (Length(AData) <> 1316) then
-        Log(llDebug, 'Data size: ' + UIntToStr(Length(AData)));
+    ExtendedCounter := 0;
+
+    if not WMain.cbExtendedMode.Checked and (Length(AData) <> 1316) then
+        Log(llDebug, 'Unknown network frame size: ' + UIntToStr(Length(AData)))
+    else if WMain.cbExtendedMode.Checked and (Length(AData) <> EXT_OFFSET + 4) then
+        Log(llDebug, 'Unknown network frame size (enabled extended mode): ' + UIntToStr(Length(AData)))
+    else if WMain.cbExtendedMode.Checked and (Length(AData) = EXT_OFFSET + 4) then begin
+        ExtendedCounter := AData[EXT_OFFSET+3] + (AData[EXT_OFFSET+2] shl 8) + (AData[EXT_OFFSET+1] shl 16) + (AData[EXT_OFFSET] shl 24);
+        if (m_uiExtendedCounter <> 0) then
+            if (m_uiExtendedCounter >= ExtendedCounter) then
+                Log(llDebug, 'Extended counter has been resetted')
+            else if (m_uiExtendedCounter + 1 <> ExtendedCounter) then
+                Log(llDebug, 'Error detected based on extended counter. Skipped frames: ' + IntToStr(ExtendedCounter - m_uiExtendedCounter - 1));
+                // TODO: show frame hash
+        m_uiExtendedCounter := ExtendedCounter
+    end;
 
     i := 0;
     j := i + 188;

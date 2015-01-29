@@ -37,6 +37,7 @@ type
         tcsErrorsCount: TBarSeries;
         timerCheckStream: TTimer;
         ledBindingIP: TLabeledEdit;
+        cbExtendedMode: TCheckBox;
         procedure bbtnStartStopClick(Sender: TObject);
         procedure FormClose(Sender: TObject; var Action: TCloseAction);
         procedure timerUpdateViewTimer(Sender: TObject);
@@ -105,6 +106,7 @@ begin
         if (idIPMCastClientTemp.IsValidMulticastGroup(ledMulticastGroup.Text)) then begin
             if ((StrToInt(ledMulticastPort.Text) > 0) and (StrToInt(ledMulticastPort.Text) < 65535)) then begin
                 if (StartMulticastWatcher(ledMulticastGroup.Text, StrToInt(ledMulticastPort.Text), ledBindingIP.Text)) then begin
+                    cbExtendedMode.Enabled := false;
                     ledMulticastGroup.Enabled := false;
                     ledMulticastPort.Enabled := false;
                     ledBindingIP.Enabled := false;
@@ -121,6 +123,7 @@ begin
 
         m_bIsMulticastThreadRunning := false;
         bbtnStartStop.Caption := 'Start';
+        cbExtendedMode.Enabled := true;
         ledMulticastGroup.Enabled := true;
         ledMulticastPort.Enabled := true;
         ledBindingIP.Enabled := true;
