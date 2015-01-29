@@ -267,8 +267,9 @@ begin
     else
     // Обработка всех остальных пакетов
     if ((StreamInfo.m_rLastPacket.PID <> MPEGTS_NULLPID) and (not PacketInfo.isOnlyAdaptation)) then begin
-        if ((StreamInfo.m_rLastPacket.Counter + 1) <> PacketInfo.Counter)
-        and (StreamInfo.m_rLastPacket.Counter <> (PacketInfo.Counter + $0F)) then begin
+        if not (((StreamInfo.m_rLastPacket.Counter + 1) = PacketInfo.Counter)
+                or (StreamInfo.m_rLastPacket.Counter = PacketInfo.Counter)  // HACK! TODO: fix this for adopt-only packets
+                or (StreamInfo.m_rLastPacket.Counter = (PacketInfo.Counter + $0F))) then begin
 
             // Находим предположительное количество ошибок от предыдущего пакета до текущего
             if (StreamInfo.m_rLastPacket.Counter < PacketInfo.Counter) then
