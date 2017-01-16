@@ -1,7 +1,7 @@
 object WMain: TWMain
   Left = 0
   Top = 0
-  Caption = 'Where is My Packet? v.0.3.10'
+  Caption = 'Where is My Packet? v.0.4.8'
   ClientHeight = 444
   ClientWidth = 629
   Color = clBtnFace
@@ -75,22 +75,27 @@ object WMain: TWMain
       LabelPosition = lpLeft
       TabOrder = 3
     end
+    object cbExtendedMode: TCheckBox
+      Left = 472
+      Top = 62
+      Width = 137
+      Height = 17
+      Anchors = [akTop, akRight]
+      Caption = 'Extended Capture Mode'
+      TabOrder = 4
+    end
   end
   object pcMainPageControl: TPageControl
     Left = 0
     Top = 89
     Width = 629
     Height = 355
-    ActivePage = tsGraphBandwidth
+    ActivePage = tsStats
     Align = alClient
     TabOrder = 1
     object tsLog: TTabSheet
       Caption = 'Log'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 351
       object lbLog: TListBox
         Left = 0
         Top = 0
@@ -103,10 +108,6 @@ object WMain: TWMain
     end
     object tsStats: TTabSheet
       Caption = 'Statistic'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 351
       object sgStats: TStringGrid
         Left = 0
         Top = 0
@@ -118,7 +119,6 @@ object WMain: TWMain
         RowCount = 2
         Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goThumbTracking]
         TabOrder = 0
-        ExplicitHeight = 351
       end
     end
     object tsGraphBandwidth: TTabSheet
@@ -211,10 +211,6 @@ object WMain: TWMain
     object tsGraphErrors: TTabSheet
       Caption = 'Errors Graph'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 351
       object tcErrorsGraph: TChart
         Left = 0
         Top = 0
@@ -241,7 +237,6 @@ object WMain: TWMain
         Align = alClient
         Color = clWindow
         TabOrder = 0
-        ExplicitHeight = 351
         PrintMargins = (
           15
           22
